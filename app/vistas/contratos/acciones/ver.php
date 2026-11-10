@@ -1,5 +1,5 @@
 <?php
-$id = (int) ($_GET['id'] ?? 0);
+$id = (int) ($_POST['id'] ?? 0);
 $contrato = $contratosController->obtener($id);
 ?>
 <div class="d-flex justify-content-between align-items-center pt-2 pb-2 mb-4 border-bottom">

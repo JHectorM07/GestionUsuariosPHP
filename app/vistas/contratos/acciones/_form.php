@@ -3,8 +3,20 @@
 require_once '../app/controladores/ClientesController.php';
 $clientesController = new ClientesController();
 $listaClientes = $clientesController->listar();
+
+// Forzamos que el envío se haga a la URL base sin parámetros GET
+$destinoURL = '/appgestionusuarios/public/index.php';
+$esEdicion  = !empty($contrato['contrato_id']);
 ?>
-<form method="POST" action="<?php echo $destino; ?>">
+<form method="POST" action="<?php echo $destinoURL; ?>">
+    <!-- CAMPOS OCULTOS PARA RUTA Y ACCIÓN (Mantiene la URL limpia) -->
+    <input type="hidden" name="controlador" value="contratos">
+    <input type="hidden" name="accion" value="<?php echo $esEdicion ? 'actualizar' : 'guardar'; ?>">
+    
+    <?php if ($esEdicion): ?>
+        <input type="hidden" name="id" value="<?php echo (int) $contrato['contrato_id']; ?>">
+    <?php endif; ?>
+
     <div class="row g-3">
         <!-- Cliente -->
         <div class="col-md-6">

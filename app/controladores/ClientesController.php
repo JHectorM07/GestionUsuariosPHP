@@ -13,7 +13,6 @@ class ClientesController {
         $this->clienteModel = new Cliente($this->db);
     }
 
-    // Devolvemos los datos a la lista
     public function listar(){
         return $this->clienteModel->listar();
     }
@@ -22,7 +21,6 @@ class ClientesController {
         return $this->clienteModel->obtenerPorId($id);
     }
 
-    // Recibimos el form de guardar
     public function guardar(){
         if($_SERVER['REQUEST_METHOD'] === 'POST'){
 
@@ -41,16 +39,14 @@ class ClientesController {
             }
 
             $this->clienteModel->crear($cliente, $email, $telefono, $estado);
-            // Mensaje de éxito al crear
             $this->redireccionar("Cliente agregado correctamente", 'success');
         }
     }
 
-    // Recibimos el form de actualizar
     public function actualizar(){
         if($_SERVER['REQUEST_METHOD'] === 'POST'){
 
-            $id       = (int) ($_GET['id'] ?? 0);
+            $id       = (int) ($_REQUEST['id'] ?? 0);
             $cliente  = trim($_POST['cliente'] ?? '');
             $email    = trim($_POST['email'] ?? '');
             $telefono = trim($_POST['telefono'] ?? '');
@@ -66,38 +62,48 @@ class ClientesController {
             }
 
             $this->clienteModel->actualizar($id, $cliente, $email, $telefono, $estado);
-            // Mensaje de éxito al editar
             $this->redireccionar("Cliente editado correctamente", 'success');
         }
     }
 
-    // Recibe la confirmación de eliminar
     public function borrar(){
-        if($_SERVER['REQUEST_METHOD'] === 'POST'){
+    if($_SERVER['REQUEST_METHOD'] === 'POST'){
 
-            $id = (int) ($_GET['id'] ?? 0);
+        $id = (int) ($_POST['id'] ?? 0);
 
-            if($id <= 0){
-                $this->redireccionar("Cliente no válido", 'danger');
-                return;
-            }
+        if($id <= 0){
+            $this->redireccionar("Cliente no válido", 'danger');
+            return;
+        }
 
+        try {
             $this->clienteModel->eliminar($id);
-            // Mensaje de éxito al eliminar
             $this->redireccionar("Cliente eliminado correctamente", 'success');
+        } catch (PDOException $e) {
+            // 23000 = violación de integridad (el cliente tiene contratos)
+            if ($e->getCode() == '23000') {
+                $this->redireccionar("No se puede eliminar: el cliente tiene contratos asociados. Puedes marcarlo como inactivo.", 'danger');
+            }
+            throw $e;   // cualquier otro error se muestra normal
         }
     }
+}
 
-    // Guarda el mensaje en la sesión y vuelve al listado (o a $destino)
-    private function redireccionar($mensaje, $tipo = 'success', $destino = '&accion=index'){
-
-        // Nos aseguramos de que $_SESSION esté iniciada si no se ha iniciado antes
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        $_SESSION['mensaje_clientes'] = ['tipo' => $tipo, 'texto' => $mensaje];
-        header("Location: /appgestionusuarios/public/index.php?controlador=clientes" . $destino);
-        exit();
+  private function redireccionar($mensaje, $tipo = 'success', $accion = 'index', $id = 0) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
     }
+
+    $_SESSION['mensaje_clientes'] = ['tipo' => $tipo, 'texto' => $mensaje];
+    
+    // Guardamos la ruta de destino en la sesión
+    $_SESSION['ir_a'] = [
+        'controlador' => 'clientes',
+        'accion'      => $accion,
+        'id'          => $id
+    ];
+
+    header("Location: /appgestionusuarios/public/index.php");
+    exit();
+}
 }

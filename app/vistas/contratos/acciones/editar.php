@@ -1,15 +1,17 @@
 <?php
-$id = (int) ($_GET['id'] ?? 0);
+// Lee el ID enviado vía POST o GET
+$id = (int) ($_REQUEST['id'] ?? 0);
 
 $contrato = $contratosController->obtener($id);
 if (!$contrato) {
     $contrato = [];
 }
 
-$destino = '/appgestionusuarios/public/index.php?controlador=contratos&accion=actualizar&id=' . $id;
+// URL limpia para el formulario
+$destino = '/appgestionusuarios/public/index.php';
 ?>
 <div class="d-flex justify-content-between align-items-center pt-2 pb-2 mb-4 border-bottom">
-    <h1 class="h2"><i class="bi bi-pencil-square me-2"></i>Editar contrato</h1>
+    <h1 class="h2"><i class="bi bi-pencil-square me-2"></i>Editar Contrato</h1>
 </div>
 
 <div class="bg-white rounded shadow-sm p-4">

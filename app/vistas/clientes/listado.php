@@ -1,7 +1,8 @@
 <?php
+// Obtener la lista de clientes desde el controlador
 $clientes = $clientesController->listar();
 
-// Mensaje que dejó el controlador (crear, actualizar o borrar)
+// Mensaje flash que dejó el controlador (crear, actualizar o borrar)
 $mensaje = $_SESSION['mensaje_clientes'] ?? null;
 unset($_SESSION['mensaje_clientes']);
 ?>
@@ -10,7 +11,7 @@ unset($_SESSION['mensaje_clientes']);
     <h1 class="h2"><i class="bi bi-people me-2"></i>Clientes</h1>
 </div>
 
-<!-- BLOQUE DE ALERTA: Si hay un mensaje en sesión, se muestra aquí -->
+<!-- BLOQUE DE ALERTA -->
 <?php if ($mensaje): ?>
     <div class="alert alert-<?php echo htmlspecialchars($mensaje['tipo']); ?> alert-dismissible fade show shadow-sm mb-4" role="alert">
         <i class="bi bi-info-circle-fill me-2"></i>
@@ -28,20 +29,32 @@ unset($_SESSION['mensaje_clientes']);
                     <th>Nombre</th>
                     <th>Correo</th>
                     <th>Teléfono</th>
+                    <th>Estado</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($clientes)): ?>
-                    <tr><td colspan="4" class="text-center text-muted py-4">No hay registros.</td></tr>
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">No hay clientes registrados.</td>
+                    </tr>
                 <?php else: ?>
                     <?php foreach ($clientes as $c): ?>
                         <tr style="cursor: pointer;">
                             <td class="text-center">
                                 <input class="form-check-input" type="radio" name="seleccion" value="<?php echo (int) $c['cliente_id']; ?>">
                             </td>
-                            <td><?php echo htmlspecialchars($c['cliente']); ?></td>
-                            <td><?php echo htmlspecialchars($c['email']); ?></td>
-                            <td><?php echo htmlspecialchars($c['telefono']); ?></td>
+                            <td><?php echo htmlspecialchars($c['cliente'] ?? ''); ?></td>
+                            <td><?php echo htmlspecialchars($c['email'] ?? ''); ?></td>
+                            <td><?php echo htmlspecialchars($c['telefono'] ?? ''); ?></td>
+                            <td>
+                                <?php 
+                                    $estado = $c['estado'] ?? 'inactivo';
+                                    $badgeColor = ($estado === 'activo') ? 'success' : 'secondary';
+                                ?>
+                                <span class="badge bg-<?php echo $badgeColor; ?>">
+                                    <?php echo ucfirst(htmlspecialchars($estado)); ?>
+                                </span>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -49,30 +62,49 @@ unset($_SESSION['mensaje_clientes']);
         </table>
     </div>
 
-    <!-- Botones CRUD -->
-    <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
-        <a href="/appgestionusuarios/public/index.php?controlador=clientes&accion=crear" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i> Crear</a>
-        <a href="#" class="btn btn-outline-secondary disabled" data-base="/appgestionusuarios/public/index.php?controlador=clientes&accion=ver"><i class="bi bi-eye me-1"></i> Ver</a>
-        <a href="#" class="btn btn-primary disabled" data-base="/appgestionusuarios/public/index.php?controlador=clientes&accion=editar"><i class="bi bi-pencil-square me-1"></i> Editar</a>
-        <a href="#" class="btn btn-danger disabled" data-base="/appgestionusuarios/public/index.php?controlador=clientes&accion=eliminar"><i class="bi bi-trash me-1"></i> Eliminar</a>
-    </div>
+    <!-- BARRA DE ACCIONES CON BOTONES Y POST -->
+    <form id="form-acciones-clientes" method="POST" action="/appgestionusuarios/public/index.php" class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+        <input type="hidden" name="controlador" value="clientes">
+        <input type="hidden" name="accion" id="input-accion-cliente" value="">
+        <input type="hidden" name="id" id="input-id-cliente" value="">
+
+        <!-- Botón Crear (Envía directamente la acción 'crear') -->
+        <button type="submit" onclick="document.getElementById('input-accion-cliente').value='crear'" class="btn btn-success">
+            <i class="bi bi-plus-lg me-1"></i> Crear
+        </button>
+
+        <!-- Botones dependientes de selección -->
+        <button type="submit" id="btn-ver-cliente" onclick="document.getElementById('input-accion-cliente').value='ver'" class="btn btn-outline-secondary" disabled>
+            <i class="bi bi-eye me-1"></i> Ver
+        </button>
+        <button type="submit" id="btn-editar-cliente" onclick="document.getElementById('input-accion-cliente').value='editar'" class="btn btn-primary" disabled>
+            <i class="bi bi-pencil-square me-1"></i> Editar
+        </button>
+        <button type="submit" id="btn-eliminar-cliente" onclick="document.getElementById('input-accion-cliente').value='eliminar'" class="btn btn-danger" disabled>
+            <i class="bi bi-trash me-1"></i> Eliminar
+        </button>
+    </form>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const radios = document.querySelectorAll('#tabla-clientes input[name="seleccion"]');
     const filas = document.querySelectorAll('#tabla-clientes tbody tr');
+    const inputId = document.getElementById('input-id-cliente');
+    const botones = [
+        document.getElementById('btn-ver-cliente'),
+        document.getElementById('btn-editar-cliente'),
+        document.getElementById('btn-eliminar-cliente')
+    ];
 
-    function actualizarAcciones(id) {
-        document.querySelectorAll('[data-base]').forEach(function (b) {
-            b.href = b.dataset.base + '&id=' + id;
-            b.classList.remove('disabled');
-        });
+    function activarSeleccion(id) {
+        inputId.value = id;
+        botones.forEach(b => b.removeAttribute('disabled'));
     }
 
     radios.forEach(function (radio) {
         radio.addEventListener('change', function () {
-            actualizarAcciones(this.value);
+            activarSeleccion(this.value);
         });
     });
 
@@ -81,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const radio = this.querySelector('input[name="seleccion"]');
             if (radio && e.target.tagName !== 'INPUT') {
                 radio.checked = true;
-                actualizarAcciones(radio.value);
+                activarSeleccion(radio.value);
             }
         });
     });

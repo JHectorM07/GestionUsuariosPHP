@@ -1,12 +1,24 @@
 <?php
 // Formulario compartido por crear.php y editar.php
-// Variables: $destino (URL del POST), $cliente (array con los valores)
+// Variables: $cliente (array con los valores si es edición)
+
+// URL base sin parámetros GET para no ensuciar la barra de direcciones
+$destinoURL = '/appgestionusuarios/public/index.php';
+$esEdicion  = !empty($cliente['cliente_id']);
 ?>
-<form method="POST" action="<?php echo $destino; ?>">
+<form method="POST" action="<?php echo $destinoURL; ?>">
+    <!-- CAMPOS OCULTOS PARA RUTA Y ACCIÓN (Mantiene la URL limpia) -->
+    <input type="hidden" name="controlador" value="clientes">
+    <input type="hidden" name="accion" value="<?php echo $esEdicion ? 'actualizar' : 'guardar'; ?>">
+
+    <!-- Input oculto para conservar el ID durante la edición -->
+    <?php if ($esEdicion): ?>
+        <input type="hidden" name="id" value="<?php echo (int) $cliente['cliente_id']; ?>">
+    <?php endif; ?>
+
     <div class="row g-3">
         <div class="col-md-6">
             <label for="cliente" class="form-label">Nombre del Cliente</label>
-            <!-- CAMBIADO: name="cliente" y $cliente['cliente'] -->
             <input type="text" class="form-control" id="cliente" name="cliente" value="<?php echo htmlspecialchars($cliente['cliente'] ?? ''); ?>" required>
         </div>
         <div class="col-md-6">

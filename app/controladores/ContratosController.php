@@ -42,14 +42,15 @@ class ContratosController {
             }
 
             $this->contratoModel->crear($cliente_id, $tipo_item, $monto_acordado, $periodicidad, $dia_corte, $fecha_inicio, $estado);
-            $this->redireccionar("Contrato creado correctamente");
+            $this->redireccionar("Contrato creado correctamente", 'success');
         }
     }
 
     public function actualizar() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-            $id             = (int) ($_GET['id'] ?? 0);
+            // CAMBIADO: $_REQUEST para capturar id enviado por POST o GET
+            $id             = (int) ($_REQUEST['id'] ?? 0);
             $cliente_id     = (int) ($_POST['cliente_id'] ?? 0);
             $tipo_item      = trim($_POST['tipo_item'] ?? 'servicio');
             $monto_acordado = (float) ($_POST['monto_acordado'] ?? $_POST['monto'] ?? 0);
@@ -68,32 +69,47 @@ class ContratosController {
             }
 
             $this->contratoModel->actualizar($id, $cliente_id, $tipo_item, $monto_acordado, $periodicidad, $dia_corte, $fecha_inicio, $estado);
-            $this->redireccionar("Contrato actualizado correctamente");
+            $this->redireccionar("Contrato actualizado correctamente", 'success');
         }
     }
 
-    public function borrar() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+   public function borrar() {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-            $id = (int) ($_GET['id'] ?? 0);
+        $id = (int) ($_REQUEST['id'] ?? 0);
 
-            if ($id <= 0) {
-                $this->redireccionar("Contrato no válido", 'danger');
-                return;
-            }
+        if ($id <= 0) {
+            $this->redireccionar("Contrato no válido", 'danger');
+            return;
+        }
 
+        try {
             $this->contratoModel->eliminar($id);
-            $this->redireccionar("Contrato eliminado correctamente");
+            $this->redireccionar("Contrato eliminado correctamente", 'success');
+        } catch (PDOException $e) {
+            // Código SQLSTATE 23000 = Violación de clave foránea / Integridad referencial
+            if ($e->getCode() == '23000') {
+                $this->redireccionar("No se puede eliminar: el contrato tiene registros asociados (cobros o facturas). Puedes marcarlo como inactivo o suspendido.", 'danger');
+            }
+            throw $e; // Cualquier otro error inesperado
         }
     }
-
-    private function redireccionar($mensaje, $tipo = 'success', $destino = '&accion=index') {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        $_SESSION['mensaje_contratos'] = ['tipo' => $tipo, 'texto' => $mensaje];
-        header("Location: /appgestionusuarios/public/index.php?controlador=contratos" . $destino);
-        exit();
+}
+private function redireccionar($mensaje, $tipo = 'success', $accion = 'index', $id = 0) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
     }
+
+    $_SESSION['mensaje_contratos'] = ['tipo' => $tipo, 'texto' => $mensaje];
+    
+    // Guardamos la ruta de destino en la sesión (CORREGIDO: 'contratos')
+    $_SESSION['ir_a'] = [
+        'controlador' => 'contratos',
+        'accion'      => $accion,
+        'id'          => $id
+    ];
+
+    header("Location: /appgestionusuarios/public/index.php");
+    exit();
+}
 }

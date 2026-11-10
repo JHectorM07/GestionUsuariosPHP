@@ -1,12 +1,13 @@
 <?php
-$id = (int) ($_GET['id'] ?? 0);
+// Lee el ID ya sea que venga por POST o por GET
+$id = (int) ($_REQUEST['id'] ?? 0);
 
 $cliente = $clientesController->obtener($id);
 if (!$cliente) {
     $cliente = [];
 }
 
-$destino = '/appgestionusuarios/public/index.php?controlador=clientes&accion=actualizar&id=' . $id;
+$destino = '/appgestionusuarios/public/index.php?controlador=clientes&accion=actualizar';
 ?>
 <div class="d-flex justify-content-between align-items-center pt-2 pb-2 mb-4 border-bottom">
     <h1 class="h2"><i class="bi bi-pencil-square me-2"></i>Editar cliente</h1>

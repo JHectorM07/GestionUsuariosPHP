@@ -1,45 +1,57 @@
 <?php 
 
 session_start();
-//Si no viene nada en la url, le asignamos login
-$controlador = $_GET['controlador'] ?? 'login';
-//Si no viene nada en la url, le asignamos index
-$accion = $_GET['accion'] ?? 'index';
 
-//Enrutador
-if($controlador === 'login'){
-  require_once '../app/controladores/AuthController.php';
-  $auth = new AuthController();
+// Destino guardado por una redirección (se usa una sola vez)
+$destino = $_SESSION['ir_a'] ?? [];
+unset($_SESSION['ir_a']);
 
-    if($accion === 'ingresar'){
-      $auth->ingresar();
-    }elseif($accion === 'salir'){
-      $auth->Salir();
-    }else{
-      require_once '../app/vistas/auth/login.php';
+$controlador = $_POST['controlador'] ?? $_GET['controlador'] ?? $destino['controlador']
+               ?? (isset($_SESSION['usuario_id']) ? 'dashboard' : 'login');
+
+$accion      = $_POST['accion'] ?? $_GET['accion'] ?? $destino['accion'] ?? 'index';
+
+// Capturamos también el ID si venía guardado en la sesión flash
+if (!isset($_POST['id']) && !isset($_GET['id']) && !empty($destino['id'])) {
+    $_REQUEST['id'] = $_POST['id'] = $_GET['id'] = $destino['id'];
+}
+
+// 1. Módulo de Autenticación
+if ($controlador === 'login') {
+    require_once '../app/controladores/AuthController.php';
+    $auth = new AuthController();
+
+    if ($accion === 'ingresar') {
+        $auth->ingresar();
+    } elseif ($accion === 'salir') {
+        $auth->Salir();
+    } else {
+        require_once '../app/vistas/auth/login.php';
     }
+    exit();
+}
 
-  }elseif($controlador === 'clientes' && in_array($accion, ['guardar', 'actualizar', 'borrar'])){
-    // Comprobamos si no existe la sesion del usuaro
-    if(!isset($_SESSION['usuario_id'])){
-      header('Location: /appgestionusuarios/public/index.php?controlador=login');
-      exit();
-  }
-  require_once '../app/controladores/ClientesController.php';
-  $clientesController = new ClientesController();
-  $clientesController->$accion();
+// Comprobación global de sesión activa para el resto de módulos
+if (!isset($_SESSION['usuario_id'])) {
+    header('Location: /appgestionusuarios/public/index.php?controlador=login');
+    exit();
+}
 
-  }elseif($controlador === 'contratos' && in_array($accion, ['guardar', 'actualizar', 'borrar'])){
-    if(!isset($_SESSION['usuario_id'])){
-      header('Location: /appgestionusuarios/public/index.php?controlador=login');
-      exit();
-    }
+// 2. Procesamiento de acciones POST de Clientes (guardar, actualizar, borrar)
+if ($controlador === 'clientes' && in_array($accion, ['guardar', 'actualizar', 'borrar'])) {
+    require_once '../app/controladores/ClientesController.php';
+    $clientesController = new ClientesController();
+    $clientesController->$accion();
+    exit();
+}
+
+// 3. Procesamiento de acciones POST de Contratos (guardar, actualizar, borrar)
+if ($controlador === 'contratos' && in_array($accion, ['guardar', 'actualizar', 'borrar'])) {
     require_once '../app/controladores/ContratosController.php';
     $contratosController = new ContratosController();
     $contratosController->$accion();
-
-}else{
-  // Cualquier otro controlador lo mandamos al switch del dashboard
-  require_once '../app/vistas/dashboard/index.php';
+    exit();
 }
 
+// 4. Carga del Layout Principal (Dashboard y Vistas GET)
+require_once '../app/vistas/dashboard/index.php';

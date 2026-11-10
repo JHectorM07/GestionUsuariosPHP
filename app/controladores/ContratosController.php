@@ -102,7 +102,6 @@ private function redireccionar($mensaje, $tipo = 'success', $accion = 'index', $
 
     $_SESSION['mensaje_contratos'] = ['tipo' => $tipo, 'texto' => $mensaje];
     
-    // Guardamos la ruta de destino en la sesión (CORREGIDO: 'contratos')
     $_SESSION['ir_a'] = [
         'controlador' => 'contratos',
         'accion'      => $accion,

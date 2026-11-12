@@ -4,7 +4,7 @@ require_once '../app/controladores/ClientesController.php';
 $clientesController = new ClientesController();
 $listaClientes = $clientesController->listar();
 
-// Forzamos que el envío se haga a la URL base sin parámetros GET
+// Forzamos que el envío se haga a la URL base sin parámetros get
 $destinoURL = '/appgestionusuarios/public/index.php';
 $esEdicion  = !empty($contrato['contrato_id']);
 ?>

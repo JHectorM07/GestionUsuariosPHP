@@ -7,103 +7,62 @@ class ClientesController {
     private $db;
     private $clienteModel;
 
-    public function __construct(){
+    public function __construct() {
         $conexion = new Conexion();
         $this->db = $conexion->getConexion();
         $this->clienteModel = new Cliente($this->db);
     }
 
-    public function listar(){
+    // Listar todos los clientes (Se llama desde la vista index.php)
+    public function listar() {
         return $this->clienteModel->listar();
     }
 
-    public function obtener($id){
+    // Obtener un cliente por su ID
+    public function obtener($id) {
         return $this->clienteModel->obtenerPorId($id);
     }
 
-    public function guardar(){
-        if($_SERVER['REQUEST_METHOD'] === 'POST'){
+    // Guardar (CREAR) nuevo cliente vía AJAX
+    public function guardar() {
+        $cliente  = $_POST['cliente']  ?? '';
+        $email    = $_POST['email']    ?? '';
+        $telefono = $_POST['telefono'] ?? '';
+        $estado   = $_POST['estado']   ?? 'activo';
 
-            $cliente  = trim($_POST['cliente'] ?? '');
-            $email    = trim($_POST['email'] ?? '');
-            $telefono = trim($_POST['telefono'] ?? '');
-            $estado   = $_POST['estado'] ?? 'activo';
+        // Corregido: $this->clienteModel en lugar de $this->modelo
+        $resultado = $this->clienteModel->crear($cliente, $email, $telefono, $estado);
 
-            if(empty($cliente) || empty($email)){
-                $this->redireccionar("Completa los campos obligatorios", 'danger', '&accion=crear');
-                return;
-            }
-
-            if(!in_array($estado, ['activo', 'inactivo'])){
-                $estado = 'activo';
-            }
-
-            $this->clienteModel->crear($cliente, $email, $telefono, $estado);
-            $this->redireccionar("Cliente agregado correctamente", 'success');
-        }
+        header('Content-Type: application/json');
+        echo json_encode(['exito' => (bool)$resultado]);
+        exit();
     }
 
-    public function actualizar(){
-        if($_SERVER['REQUEST_METHOD'] === 'POST'){
+    // Actualizar cliente existente vía AJAX
+    public function actualizar() {
+        $id       = $_POST['id']       ?? 0;
+        $cliente  = $_POST['cliente']  ?? '';
+        $email    = $_POST['email']    ?? '';
+        $telefono = $_POST['telefono'] ?? '';
+        $estado   = $_POST['estado']   ?? 'activo';
 
-            $id       = (int) ($_REQUEST['id'] ?? 0);
-            $cliente  = trim($_POST['cliente'] ?? '');
-            $email    = trim($_POST['email'] ?? '');
-            $telefono = trim($_POST['telefono'] ?? '');
-            $estado   = $_POST['estado'] ?? 'activo';
+        // Corregido: $this->clienteModel en lugar de $this->modelo
+        $resultado = $this->clienteModel->actualizar($id, $cliente, $email, $telefono, $estado);
 
-            if($id <= 0 || empty($cliente) || empty($email)){
-                $this->redireccionar("Completa los campos obligatorios", 'danger', "&accion=editar&id=$id");
-                return;
-            }
-
-            if(!in_array($estado, ['activo', 'inactivo'])){
-                $estado = 'activo';
-            }
-
-            $this->clienteModel->actualizar($id, $cliente, $email, $telefono, $estado);
-            $this->redireccionar("Cliente editado correctamente", 'success');
-        }
+        header('Content-Type: application/json');
+        echo json_encode(['exito' => (bool)$resultado]);
+        exit();
     }
 
-    public function borrar(){
-    if($_SERVER['REQUEST_METHOD'] === 'POST'){
+    // Eliminar cliente vía AJAX
+    public function borrar() {
+        $id = $_POST['id'] ?? 0;
 
-        $id = (int) ($_POST['id'] ?? 0);
+        // Corregido: $this->clienteModel en lugar de $this->modelo
+        $resultado = $this->clienteModel->eliminar($id);
 
-        if($id <= 0){
-            $this->redireccionar("Cliente no válido", 'danger');
-            return;
-        }
-
-        try {
-            $this->clienteModel->eliminar($id);
-            $this->redireccionar("Cliente eliminado correctamente", 'success');
-        } catch (PDOException $e) {
-            // 23000 = violación de integridad (el cliente tiene contratos)
-            if ($e->getCode() == '23000') {
-                $this->redireccionar("No se puede eliminar: el cliente tiene contratos asociados. Puedes marcarlo como inactivo.", 'danger');
-            }
-            throw $e;   // cualquier otro error se muestra normal
-        }
+        header('Content-Type: application/json');
+        echo json_encode(['exito' => (bool)$resultado]);
+        exit();
     }
-}
-
-  private function redireccionar($mensaje, $tipo = 'success', $accion = 'index', $id = 0) {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-
-    $_SESSION['mensaje_clientes'] = ['tipo' => $tipo, 'texto' => $mensaje];
-    
-    // Guardamos la ruta de destino en la sesión
-    $_SESSION['ir_a'] = [
-        'controlador' => 'clientes',
-        'accion'      => $accion,
-        'id'          => $id
-    ];
-
-    header("Location: /appgestionusuarios/public/index.php");
-    exit();
-}
 }

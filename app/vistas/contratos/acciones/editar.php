@@ -1,5 +1,5 @@
 <?php
-// Lee el ID enviado vía POST o GET
+
 $id = (int) ($_REQUEST['id'] ?? 0);
 
 $contrato = $contratosController->obtener($id);

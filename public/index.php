@@ -37,7 +37,7 @@ if (!isset($_SESSION['usuario_id'])) {
     exit();
 }
 
-// 2. Procesamiento de acciones POST de Clientes (guardar, actualizar, borrar)
+// 2. Procesamiento de acciones POST/AJAX de Clientes
 if ($controlador === 'clientes' && in_array($accion, ['guardar', 'actualizar', 'borrar'])) {
     require_once '../app/controladores/ClientesController.php';
     $clientesController = new ClientesController();
@@ -45,7 +45,7 @@ if ($controlador === 'clientes' && in_array($accion, ['guardar', 'actualizar', '
     exit();
 }
 
-// 3. Procesamiento de acciones POST de Contratos (guardar, actualizar, borrar)
+// 3. Procesamiento de acciones POST/AJAX de Contratos
 if ($controlador === 'contratos' && in_array($accion, ['guardar', 'actualizar', 'borrar'])) {
     require_once '../app/controladores/ContratosController.php';
     $contratosController = new ContratosController();

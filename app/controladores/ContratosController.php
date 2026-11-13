@@ -24,22 +24,28 @@ class ContratosController {
     public function guardar() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $cliente_id     = (int) ($_POST['cliente_id'] ?? 0);
-            $tipo_item      = trim($_POST['tipo_item'] ?? 'servicio');
-            $monto_acordado = (float) ($_POST['monto_acordado'] ?? $_POST['monto'] ?? 0);
-            $periodicidad   = trim($_POST['periodicidad'] ?? 'mensual');
+            $tipo_item      = $_POST['tipo_item'] ?? 'servicio';
+            $servicio_id    = ($tipo_item === 'servicio' && !empty($_POST['servicio_id'])) ? (int) $_POST['servicio_id'] : null;
+            $producto_id    = ($tipo_item === 'producto' && !empty($_POST['producto_id'])) ? (int) $_POST['producto_id'] : null;
+            $monto_acordado = (float) ($_POST['monto_acordado'] ?? 0);
+            $periodicidad   = $_POST['periodicidad'] ?? 'mensual';
             $dia_corte      = (int) ($_POST['dia_corte'] ?? 1);
-            $fecha_inicio   = trim($_POST['fecha_inicio'] ?? '');
+            $fecha_inicio   = $_POST['fecha_inicio'] ?? '';
             $estado         = $_POST['estado'] ?? 'activo';
 
-            if ($cliente_id <= 0 || empty($fecha_inicio) || $monto_acordado <= 0) {
-                $this->responderJson(false, "Completa todos los campos obligatorios correctamente");
+            if ($cliente_id <= 0 || $monto_acordado <= 0 || empty($fecha_inicio)) {
+                $this->responderJson(false, "Completa todos los campos obligatorios.");
             }
 
-            if (!in_array($estado, ['activo', 'inactivo', 'suspendido'])) {
-                $estado = 'activo';
+            if ($tipo_item === 'servicio' && !$servicio_id) {
+                $this->responderJson(false, "Debes seleccionar un servicio del catálogo.");
             }
 
-            $this->contratoModel->crear($cliente_id, $tipo_item, $monto_acordado, $periodicidad, $dia_corte, $fecha_inicio, $estado);
+            if ($tipo_item === 'producto' && !$producto_id) {
+                $this->responderJson(false, "Debes seleccionar un producto del catálogo.");
+            }
+
+            $this->contratoModel->crear($cliente_id, $tipo_item, $servicio_id, $producto_id, $monto_acordado, $periodicidad, $dia_corte, $fecha_inicio, $estado);
             $this->responderJson(true, "Contrato creado correctamente");
         }
     }
@@ -48,22 +54,28 @@ class ContratosController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id             = (int) ($_POST['id'] ?? 0);
             $cliente_id     = (int) ($_POST['cliente_id'] ?? 0);
-            $tipo_item      = trim($_POST['tipo_item'] ?? 'servicio');
-            $monto_acordado = (float) ($_POST['monto_acordado'] ?? $_POST['monto'] ?? 0);
-            $periodicidad   = trim($_POST['periodicidad'] ?? 'mensual');
+            $tipo_item      = $_POST['tipo_item'] ?? 'servicio';
+            $servicio_id    = ($tipo_item === 'servicio' && !empty($_POST['servicio_id'])) ? (int) $_POST['servicio_id'] : null;
+            $producto_id    = ($tipo_item === 'producto' && !empty($_POST['producto_id'])) ? (int) $_POST['producto_id'] : null;
+            $monto_acordado = (float) ($_POST['monto_acordado'] ?? 0);
+            $periodicidad   = $_POST['periodicidad'] ?? 'mensual';
             $dia_corte      = (int) ($_POST['dia_corte'] ?? 1);
-            $fecha_inicio   = trim($_POST['fecha_inicio'] ?? '');
+            $fecha_inicio   = $_POST['fecha_inicio'] ?? '';
             $estado         = $_POST['estado'] ?? 'activo';
 
-            if ($id <= 0 || $cliente_id <= 0 || empty($fecha_inicio) || $monto_acordado <= 0) {
-                $this->responderJson(false, "Completa los campos obligatorios");
+            if ($id <= 0 || $cliente_id <= 0 || $monto_acordado <= 0 || empty($fecha_inicio)) {
+                $this->responderJson(false, "Completa todos los campos obligatorios.");
             }
 
-            if (!in_array($estado, ['activo', 'inactivo', 'suspendido'])) {
-                $estado = 'activo';
+            if ($tipo_item === 'servicio' && !$servicio_id) {
+                $this->responderJson(false, "Debes seleccionar un servicio del catálogo.");
             }
 
-            $this->contratoModel->actualizar($id, $cliente_id, $tipo_item, $monto_acordado, $periodicidad, $dia_corte, $fecha_inicio, $estado);
+            if ($tipo_item === 'producto' && !$producto_id) {
+                $this->responderJson(false, "Debes seleccionar un producto del catálogo.");
+            }
+
+            $this->contratoModel->actualizar($id, $cliente_id, $tipo_item, $servicio_id, $producto_id, $monto_acordado, $periodicidad, $dia_corte, $fecha_inicio, $estado);
             $this->responderJson(true, "Contrato actualizado correctamente");
         }
     }

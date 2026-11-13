@@ -53,5 +53,21 @@ if ($controlador === 'contratos' && in_array($accion, ['guardar', 'actualizar', 
     exit();
 }
 
-// 4. Carga del Layout Principal (Dashboard y Vistas GET)
+// 4. Procesamiento de acciones POST/AJAX de Servicios
+if ($controlador === 'servicios' && in_array($accion, ['guardar', 'actualizar', 'borrar'])) {
+    require_once '../app/controladores/ServiciosController.php';
+    $serviciosController = new ServiciosController();
+    $serviciosController->$accion();
+    exit();
+}
+
+// 5. Procesamiento de acciones POST/AJAX de Productos
+if ($controlador === 'productos' && in_array($accion, ['guardar', 'actualizar', 'borrar'])) {
+    require_once '../app/controladores/ProductosController.php';
+    $productosController = new ProductosController();
+    $productosController->$accion();
+    exit();
+}
+
+// 6. Carga del Layout Principal (Dashboard y Vistas GET)
 require_once '../app/vistas/dashboard/index.php';

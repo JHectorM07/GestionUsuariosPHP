@@ -1,52 +1,81 @@
-<?php 
+<?php
 
 class Contrato {
-    private $conn;
-    private $tabla = "contratos";
+    private $db;
 
     public function __construct($db) {
-        $this->conn = $db;
+        $this->db = $db;
     }
 
-    
     public function listar() {
-        $query = "SELECT c.*, cl.cliente AS nombre_cliente 
-                  FROM {$this->tabla} c
-                  INNER JOIN clientes cl ON c.cliente_id = cl.cliente_id
-                  ORDER BY c.contrato_id DESC";
-        $stmt = $this->conn->query($query);
-        return $stmt->fetchAll();
+        $sql = "SELECT c.*, 
+                       cl.cliente AS nombre_cliente,
+                       s.servicio AS nombre_servicio,
+                       p.producto AS nombre_producto
+                FROM contratos c
+                LEFT JOIN clientes cl ON c.cliente_id = cl.cliente_id
+                LEFT JOIN servicios s ON c.servicio_id = s.servicio_id
+                LEFT JOIN productos p ON c.producto_id = p.producto_id
+                ORDER BY c.contrato_id DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    
     public function obtenerPorId($id) {
-        $query = "SELECT * FROM {$this->tabla} WHERE contrato_id = ? LIMIT 1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$id]);
-        return $stmt->fetch();
+        $sql = "SELECT * FROM contratos WHERE contrato_id = :id LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    
-    public function crear($cliente_id, $tipo_item, $monto_acordado, $periodicidad, $dia_corte, $fecha_inicio, $estado) {
-        $query = "INSERT INTO {$this->tabla} (cliente_id, tipo_item, monto_acordado, periodicidad, dia_corte, fecha_inicio, estado) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $this->conn->prepare($query);
-        return $stmt->execute([$cliente_id, $tipo_item, $monto_acordado, $periodicidad, $dia_corte, $fecha_inicio, $estado]);
+    public function crear($cliente_id, $tipo_item, $servicio_id, $producto_id, $monto_acordado, $periodicidad, $dia_corte, $fecha_inicio, $estado) {
+        $sql = "INSERT INTO contratos (cliente_id, tipo_item, servicio_id, producto_id, monto_acordado, periodicidad, dia_corte, fecha_inicio, estado)
+                VALUES (:cliente_id, :tipo_item, :servicio_id, :producto_id, :monto_acordado, :periodicidad, :dia_corte, :fecha_inicio, :estado)";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            ':cliente_id'     => $cliente_id,
+            ':tipo_item'      => $tipo_item,
+            ':servicio_id'    => $servicio_id,
+            ':producto_id'    => $producto_id,
+            ':monto_acordado' => $monto_acordado,
+            ':periodicidad'   => $periodicidad,
+            ':dia_corte'      => $dia_corte,
+            ':fecha_inicio'   => $fecha_inicio,
+            ':estado'         => $estado
+        ]);
     }
 
-    
-    public function actualizar($id, $cliente_id, $tipo_item, $monto_acordado, $periodicidad, $dia_corte, $fecha_inicio, $estado) {
-        $query = "UPDATE {$this->tabla} 
-                  SET cliente_id = ?, tipo_item = ?, monto_acordado = ?, periodicidad = ?, dia_corte = ?, fecha_inicio = ?, estado = ? 
-                  WHERE contrato_id = ?";
-        $stmt = $this->conn->prepare($query);
-        return $stmt->execute([$cliente_id, $tipo_item, $monto_acordado, $periodicidad, $dia_corte, $fecha_inicio, $estado, $id]);
+    public function actualizar($id, $cliente_id, $tipo_item, $servicio_id, $producto_id, $monto_acordado, $periodicidad, $dia_corte, $fecha_inicio, $estado) {
+        $sql = "UPDATE contratos
+                SET cliente_id     = :cliente_id,
+                    tipo_item      = :tipo_item,
+                    servicio_id    = :servicio_id,
+                    producto_id    = :producto_id,
+                    monto_acordado = :monto_acordado,
+                    periodicidad   = :periodicidad,
+                    dia_corte      = :dia_corte,
+                    fecha_inicio   = :fecha_inicio,
+                    estado         = :estado
+                WHERE contrato_id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            ':id'             => $id,
+            ':cliente_id'     => $cliente_id,
+            ':tipo_item'      => $tipo_item,
+            ':servicio_id'    => $servicio_id,
+            ':producto_id'    => $producto_id,
+            ':monto_acordado' => $monto_acordado,
+            ':periodicidad'   => $periodicidad,
+            ':dia_corte'      => $dia_corte,
+            ':fecha_inicio'   => $fecha_inicio,
+            ':estado'         => $estado
+        ]);
     }
 
-    
     public function eliminar($id) {
-        $query = "DELETE FROM {$this->tabla} WHERE contrato_id = ?";
-        $stmt = $this->conn->prepare($query);
-        return $stmt->execute([$id]);
+        $sql = "DELETE FROM contratos WHERE contrato_id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([':id' => $id]);
     }
 }

@@ -26,6 +26,12 @@ include_once '../app/vistas/componentes/header.php';
                     case 'contratos':
                         include_once '../app/vistas/contratos/index.php';
                         break;
+                    case 'servicios':
+                        include_once '../app/vistas/servicios/index.php';
+                        break;
+                    case 'productos':
+                        include_once '../app/vistas/productos/index.php';
+                        break;
                     default:
                         echo 'Página no encontrada';
                         break;

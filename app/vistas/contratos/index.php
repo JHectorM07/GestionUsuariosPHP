@@ -188,11 +188,11 @@ unset($_SESSION['mensaje_contratos']);
 
                         <div class="col-md-6 mb-3">
                             <label for="selPeriodicidad" class="form-label">Periodicidad</label>
-                            <select name="periodicidad" id="selPeriodicidad" class="form-select">
-                                <option value="mensual">Mensual</option>
-                                <option value="anual">Anual</option>
-                                <option value="unico">Pago Único</option>
-                            </select>
+                                <select name="periodicidad" id="selPeriodicidad" class="form-select" onchange="recalcularMontoPorPeriodicidad()">
+                                    <option value="mensual">Mensual</option>
+                                    <option value="anual">Anual</option>
+                                    <option value="unico">Pago Único</option>
+                                </select>
                         </div>
                     </div>
 
@@ -279,14 +279,36 @@ function alternarSelectorItem() {
     }
 }
 
+function recalcularMontoPorPeriodicidad() {
+    const tipo = document.getElementById('selTipoItem').value;
+    if (tipo !== 'servicio') return;
+
+    const selectSrv = document.getElementById('selServicio');
+    const opcion = selectSrv.options[selectSrv.selectedIndex];
+    if (!opcion || !opcion.value) return;
+
+    const precioBase = parseFloat(opcion.dataset.precio) || 0;
+    const perBase = opcion.dataset.periodicidad || 'mensual'; // Cómo viene del catálogo
+    const perElegida = document.getElementById('selPeriodicidad').value; // Cómo lo quiere pagar el cliente
+
+    let montoCalculado = precioBase;
+
+    if (perBase === 'mensual' && perElegida === 'anual') {
+        montoCalculado = precioBase * 12;
+    } else if (perBase === 'anual' && perElegida === 'mensual') {
+        montoCalculado = precioBase / 12;
+    }
+
+    document.getElementById('txtMonto').value = montoCalculado.toFixed(2);
+}
+
 function autocompletarDatosServicio() {
     const select = document.getElementById('selServicio');
     const opcion = select.options[select.selectedIndex];
     if (opcion && opcion.value) {
-        document.getElementById('txtMonto').value = opcion.dataset.precio || '';
         const per = opcion.dataset.periodicidad;
-        // Si el servicio en catálogo tiene mensual o anual, lo aplica; si no, deja mensual
         document.getElementById('selPeriodicidad').value = (per === 'anual') ? 'anual' : 'mensual';
+        recalcularMontoPorPeriodicidad();
     }
 }
 
